@@ -417,10 +417,14 @@ class HelpWindow(VimWindow):
         '  <F2>   step into                |   ,e  eval            \n' + \
         '  <F3>   step over                |                       \n' + \
         '  <F4>   step out                 |                       \n' + \
-        '  <F5>   run                      | [ Command Mode ]      \n' + \
-        '  <F6>   quit debugging           | :Bp toggle breakpoint \n' + \
-        '                                  | :Up stack up          \n' + \
-        '  <F11>  get all context          | :Dn stack down        \n' + \
+        '  <F5>   run                      |                       \n' + \
+        '  <F6>   quit debugging           |                       \n' + \
+        '                                  |                       \n' + \
+        '  <F8>   toggle breakpoint        |                       \n' + \
+        '  <F9>   stack up                 |                       \n' + \
+        '  <F10>  stack down               |                       \n' + \
+        '                                  |                       \n' + \
+        '  <F11>  get all context          |                       \n' + \
         '  <F12>  get property at cursor   |                       \n' + \
         '\n')
     self.command('1')
@@ -548,22 +552,26 @@ class DbgProtocol:
   def isconnected(self):
     return self.isconned
   def accept(self):
-    print 'waiting for a new connection on port '+str(self.port)+' for 5 seconds...'
+    # Set command height so two lines of messages will fit
+    print 'Waiting for a new connection on port ' + str(self.port) + ' for 10 seconds... '
     serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
       serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       serv.bind(('', self.port))
-      serv.listen(5)
+      serv.listen(10)
       (self.sock, address) = serv.accept()
     except socket.timeout:
+      # Clear the message area so the user won't have to press enter after
+      # timeout message
+      vim.command('redraw!')
+      print 'Timeout waiting for debugger connection'
       serv.close()
-      self.stop()
-      print 'timeout'
-      return
+      return False
 
-    print 'connection from ', address
+    print 'Connection from ', address
     self.isconned = 1
     serv.close()
+    return True
   def close(self):
     if self.sock != None:
       self.sock.close()
@@ -663,7 +671,7 @@ class Debugger:
   #
   def __init__(self, port = 9000, max_children = '32', max_data = '1024', max_depth = '1', minibufexpl = '0', debug = 0):
     """ initialize Debugger """
-    socket.setdefaulttimeout(5)
+    socket.setdefaulttimeout(10)
     self.port       = port
     self.debug      = debug
 
@@ -925,7 +933,8 @@ class Debugger:
         self.command('stack_get')
     else:
       self.clear()
-      self.protocol.accept()
+      if not self.protocol.accept():
+          return
       self.ui.debug_mode()
       self.running = 1
 

@@ -142,9 +142,6 @@ nnoremap ,e :python debugger_watch_input("eval")<cr>A
 map <F5> :python debugger_run()<cr>
 map <F6> :python debugger_quit()<cr>
 
-map <F7> :python debugger_command('step_into')<cr>
-map <F8> :python debugger_command('step_over')<cr>
-map <F9> :python debugger_command('step_out')<cr>
 
 map <F11> :python debugger_context()<cr>
 map <F12> :python debugger_property()<cr>
@@ -157,6 +154,11 @@ hi DbgBreakPt term=reverse ctermfg=White ctermbg=Green gui=reverse
 command! -nargs=? Bp python debugger_mark('<args>')
 command! -nargs=0 Up python debugger_up()
 command! -nargs=0 Dn python debugger_down()
+
+map <F8> :Bp<cr>
+map <F9> :Up<cr>
+map <F10> :Dn<cr>
+
 sign define current text=->  texthl=DbgCurrent linehl=DbgCurrent
 sign define breakpt text=B>  texthl=DbgBreakPt linehl=DbgBreakPt
 
